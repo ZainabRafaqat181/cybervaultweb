@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head><title>Cyber Vault</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{margin:0;display:flex;min-height:100vh;font-family:Segoe UI;background:#212121;color:white}
+.sidebar{width:220px;background:#2b2b2b;padding:15px;display:flex;flex-direction:column;gap:12px}
+.logo{text-align:center;font-size:26px;font-weight:bold;padding:20px 0;line-height:1.2}
+.box{background:#333;border-radius:10px;padding:12px;text-align:center}
+.green{color:#2ecc71;font-weight:bold}
+.main{flex:1;padding:20px;display:flex;flex-direction:column;align-items:center}
+.title{font-size:28px;font-weight:bold;margin-top:10px;text-align:center}
+.sub{color:#aaa;font-size:13px;margin:8px;text-align:center}
+.card{background:#333;width:95%;max-width:650px;border-radius:12px;padding:20px;margin-top:20px;text-align:center}
+#fileName{color:#bbb;margin:10px;word-break:break-all}
+.btn{background:#1f6aa5;color:white;border:none;padding:12px 22px;border-radius:8px;font-weight:bold;cursor:pointer;margin:5px}
+.btn:disabled{background:#555}
+.btn-red{background:#8b2a2a}
+.row{display:flex;justify-content:center;flex-wrap:wrap;margin-top:15px;gap:10px}
+#status{margin-top:20px;font-weight:bold;font-size:15px;text-align:center;color:#ffcc00}
+#hint{margin-top:10px;font-size:12px;color:#aaa;text-align:center}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<div class="logo">🔐<br>CYBER<br>VAULT</div>
+<div class="box">🟢 System Online</div>
+<div class="box"><div>🔐 Security Level</div><div class="green">HIGH</div></div>
+<div class="box"><div>📊 Stats</div><div id="enc" style="font-size:12px">Encrypted: 0</div><div id="dec" style="font-size:12px">Decrypted: 0</div></div>
+</div>
+<div class="main">
+<div class="title">Secure File Encryption System</div>
+<div class="sub">Information Security Project using Python & Cryptography</div>
+<div class="card">
+<div id="fileName">No file selected</div>
+<input type="file" id="fileInput" hidden>
+<div class="row">
+<button class="btn" id="selectBtn">📁 Select File</button>
+<button class="btn btn-red" id="clearBtn" style="display:none">❌ Unselect / Clear</button>
+</div>
+<div class="row">
+<button class="btn" id="encBtn" disabled>🔒 Encrypt File</button>
+<button class="btn" id="decBtn" disabled>🔓 Decrypt File</button>
+</div>
+</div>
+<div id="status">Status: Ready</div>
+<div id="hint"></div>
+</div>
+<script>
+const fileInput=document.getElementById('fileInput'),fileName=document.getElementById('fileName'),statusDiv=document.getElementById('status'),hintDiv=document.getElementById('hint'),selectBtn=document.getElementById('selectBtn'),clearBtn=document.getElementById('clearBtn'),encBtn=document.getElementById('encBtn'),decBtn=document.getElementById('decBtn');
+function noFile(){fileInput.value="";fileName.textContent="No file selected";statusDiv.textContent="Status: Ready";hintDiv.textContent="";clearBtn.style.display="none";encBtn.disabled=true;decBtn.disabled=true;}
+selectBtn.onclick=()=>fileInput.click();clearBtn.onclick=()=>noFile();
+fileInput.onchange=()=>{if(fileInput.files[0]){fileName.textContent="Selected: "+fileInput.files[0].name;statusDiv.textContent="Status: File Selected";hintDiv.textContent="";clearBtn.style.display="inline-block";encBtn.disabled=false;decBtn.disabled=false;}};
+async function sendAction(type){if(!fileInput.files[0])return;statusDiv.textContent="Status: Processing...";const fd=new FormData();fd.append('file',fileInput.files[0]);try{const res=await fetch('/'+type,{method:'POST',body:fd});if(!res.ok){const j=await res.json();statusDiv.textContent="Status: "+j.msg;hintDiv.textContent="Tip: For Decrypt, you must select the ENCRYPTED file from Downloads folder, not the original file!";return;}const blob=await res.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fileInput.files[0].name;a.click();URL.revokeObjectURL(url);if(type=='encrypt'){statusDiv.textContent="Status: File Encrypted Successfully 🔒";hintDiv.textContent="✅ Encrypted file downloaded to Downloads folder. Now to test Decrypt, CLEAR and select that downloaded file from Downloads!";}else{statusDiv.textContent="Status: File Decrypted Successfully 🔓";hintDiv.textContent="✅ Decrypted file downloaded! Check Downloads folder.";}updateStats();}catch(e){statusDiv.textContent="Status: Error "+e;}}
+encBtn.onclick=()=>sendAction('encrypt');decBtn.onclick=()=>sendAction('decrypt');
+async function updateStats(){const r=await fetch('/stats');const j=await r.json();document.getElementById('enc').textContent="Encrypted: "+j.enc;document.getElementById('dec').textContent="Decrypted: "+j.dec;}
+</script>
+</body>
+</html>
